@@ -267,8 +267,15 @@ class MzMLAssessor:
                             stats[charge_stat] = 0
                         stats[charge_stat] += 1
 
+                        # Get the scan number for the spectrum
+                        nativeId = spectrum['id']
+                        scan_number = -1
+                        match = re.search(r'scan=(\d+)',nativeId)
+                        if match:
+                            scan_number = int(match.group(1))
+
                         #### Extract the isolation window information
-                        self.record_isolation_window_stats(spectrum, stats, ms_one_tolerance_dict)
+                        self.record_isolation_window_stats(spectrum, stats, ms_one_tolerance_dict, scan_number)
 
                         #self.add_spectrum(spectrum,spectrum_type,precursor_mz)
                         peaklist = {
@@ -287,11 +294,6 @@ class MzMLAssessor:
 
                         # If the user requested writing of a fragmentation_type_file, record that information
                         if write_fragmentation_type_file is not None:
-                            nativeId = spectrum['id']
-                            scan_number = -1
-                            match = re.search(r'scan=(\d+)',nativeId)
-                            if match:
-                                scan_number = match.group(1)
                             scan_fragmentation_list.append(f"{scan_number}\t{stats['fragmentation_tag']}")
 
                     #### Update counters and print progress
@@ -591,38 +593,60 @@ class MzMLAssessor:
 
     ####################################################################################################
     #### Record the isolation window information and precursor ion and scan time information
-    def record_isolation_window_stats(self, spectrum, stats, ms_one_tolerance_dict):
-        #isolation_window_target_mz = None
+    def record_isolation_window_stats(self, spectrum, stats, ms_one_tolerance_dict, scan_number):
+        isolation_window_target_mz = None
         isolation_window_lower_offset = None
         isolation_window_upper_offset = None
         precursor_ion = None
         start_scan_time = None
 
-        try:
-            #isolation_window_target_mz = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window target m/z']
-            isolation_window_lower_offset = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window lower offset']
-            isolation_window_upper_offset = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window upper offset']
-   
-            precursor_ion = spectrum['precursorList']['precursor'][0]['selectedIonList']['selectedIon'][0]['selected ion m/z']
-            start_scan_time = spectrum['scanList']['scan'][0]['scan start time'] #Scan_start_time is assumed to be in minutes as pyteomic's documantation is in minuets
-            mz_int = int(precursor_ion)
-
-            if mz_int not in ms_one_tolerance_dict:
-                ms_one_tolerance_dict[mz_int] = {"mz":[], "time":[]}
-
-            ms_one_tolerance_dict[mz_int]['mz'].append(precursor_ion)
-            ms_one_tolerance_dict[mz_int]['time'].append(start_scan_time)
-
-        except:
-            # Cannot get the isolation window information. oh well
-            pass
         if 'isolation_window_full_widths' not in stats:
             stats['isolation_window_full_widths'] = {}
+        if 'isolation_window_last_scans' not in stats:
+            stats['isolation_window_last_scans'] = {}
+
+        try:
+            isolation_window_target_mz = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window target m/z']
+            isolation_window_lower_offset = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window lower offset']
+            isolation_window_upper_offset = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window upper offset']
+        except Exception as e:
+            return
+
         if isolation_window_lower_offset is not None and isolation_window_upper_offset is not None:
             full_width = isolation_window_lower_offset + isolation_window_upper_offset
             if full_width not in stats['isolation_window_full_widths']:
                 stats['isolation_window_full_widths'][full_width] = 0
             stats['isolation_window_full_widths'][full_width] += 1
+
+        isolation_window_lower_bound = round(isolation_window_target_mz - isolation_window_lower_offset, 2)
+        isolation_window_upper_bound = round(isolation_window_target_mz + isolation_window_lower_offset, 2)
+        isolation_window_str = f"{isolation_window_lower_bound}-{isolation_window_upper_bound}"
+
+        if isolation_window_str in stats['isolation_window_last_scans']:
+            scan_delta = scan_number - stats['isolation_window_last_scans'][isolation_window_str]['last_scan_number']
+            if scan_delta not in stats['isolation_window_last_scans'][isolation_window_str]['scan_deltas']:
+                stats['isolation_window_last_scans'][isolation_window_str]['scan_deltas'][scan_delta] = 0
+            stats['isolation_window_last_scans'][isolation_window_str]['scan_deltas'][scan_delta] += 1
+            stats['isolation_window_last_scans'][isolation_window_str]['last_scan_number'] = scan_number
+
+        else:
+            stats['isolation_window_last_scans'][isolation_window_str] = { 'last_scan_number': scan_number, 'scan_deltas': {} }
+
+        try:
+            precursor_ion = spectrum['precursorList']['precursor'][0]['selectedIonList']['selectedIon'][0]['selected ion m/z']
+            start_scan_time = spectrum['scanList']['scan'][0]['scan start time'] # Scan_start_time is assumed to be in minutes since pyteomics documentation says minutes
+        except Exception as e:
+            return
+
+        mz_int = int(precursor_ion)
+
+        if mz_int not in ms_one_tolerance_dict:
+            ms_one_tolerance_dict[mz_int] = {"mz":[], "time":[]}
+
+        ms_one_tolerance_dict[mz_int]['mz'].append(precursor_ion)
+        ms_one_tolerance_dict[mz_int]['time'].append(start_scan_time)
+
+
 
     ####################################################################################################
     #### Parse the filter string
