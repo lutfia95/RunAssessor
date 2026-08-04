@@ -336,7 +336,28 @@ class MzMLAssessor:
             self.log_event('ERROR','NoMS2Scans',f"This mzML file has no MS2 scans. Check file '{self.mzml_file}'")
 
         #### Try to distinguish DDA vs DIA
-        if 'isolation_window_full_widths' in stats:
+        if 'isolation_window_last_scans' in stats:
+            window_stats = {}
+            for window, window_details in stats['isolation_window_last_scans'].items():
+                n_scan_deltas = len(stats['isolation_window_last_scans'][window]['scan_deltas'])
+                if n_scan_deltas <= 2:
+                    for scan_delta, n_scans in stats['isolation_window_last_scans'][window]['scan_deltas'].items():
+                        if scan_delta not in window_stats:
+                            window_stats[scan_delta] = 0
+                        window_stats[scan_delta] += n_scans
+            stats['n_different_isolation_windows'] = len(stats['isolation_window_last_scans'])
+            stats['isolation_window_periodicities'] = window_stats
+            if len(stats['isolation_window_periodicities']) <= 5: # Really should just be 1 instead of huge, but allow for future creativity
+                stats['acquisition_type'] = 'DIA'
+            else:
+                stats['acquisition_type'] = 'DDA'
+            if len(stats['isolation_window_last_scans']) > 500:
+                stats['isolation_window_last_scans'] = { "ommitted": "too many isolation windows to report" }
+            if len(stats['isolation_window_periodicities']) >= 10:
+                stats['isolation_window_periodicities'] = { "ommitted": "too many isolation window periodicities to report" }
+
+        #### Try to distinguish DDA vs DIA
+        elif 'isolation_window_full_widths' in stats:
             smallest_window = 999999
             largest_window = 0
             for window_size in stats['isolation_window_full_widths']:
