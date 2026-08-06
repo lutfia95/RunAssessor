@@ -1579,18 +1579,20 @@ class MzMLAssessor:
             #### Detect water loss z=2 or not
             loss_type = 'precursor_loss_' + fragmentations
             if self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak']['mode_bin']['n_spectra'] >= 50:
-                if 'fit' in self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak'] and self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak']['fit']['sigma_mz'] < 0.1:
-                    self.metadata['files'][self.mzml_file]['summary'][fragmentations]['has water_loss'] = True
+                if 'fit' in self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak']
+                    if self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak']['fit']['sigma_mz'] < 0.1:
+                        self.metadata['files'][self.mzml_file]['summary'][fragmentations]['has water_loss'] = True
+                    else:
+                        self.metadata['files'][self.mzml_file]['summary'][fragmentations]['has water_loss'] = False
+                    if ('LR' in fragmentations or 'HR_IT_ETD' in fragmentations) and abs(self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak']['fit']['delta_mz']) > 0.4:
+                        self.metadata['files'][self.mzml_file]['summary'][fragmentations]['has water_loss'] = False
+                    elif 'HR' in fragmentations and abs(self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak']['fit']['delta_mz']) > 0.008:
+                        self.metadata['files'][self.mzml_file]['summary'][fragmentations]['has water_loss'] = False
                 else:
                     self.metadata['files'][self.mzml_file]['summary'][fragmentations]['has water_loss'] = False
-                if ('LR' in fragmentations or 'HR_IT_ETD' in fragmentations) and abs(self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak']['fit']['delta_mz']) > 0.4:
-                    self.metadata['files'][self.mzml_file]['summary'][fragmentations]['has water_loss'] = False
-                elif 'HR' in fragmentations and abs(self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak']['fit']['delta_mz']) > 0.008:
-                    self.metadata['files'][self.mzml_file]['summary'][fragmentations]['has water_loss'] = False
-                    
             else:
                 self.metadata['files'][self.mzml_file]['summary'][fragmentations]['has water_loss'] = False
-            
+
 
             epsilon = 1e-10
             if self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak']['assessment']['is_found'] is True and self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['phosphoric_acid_z2']['peak']['assessment']['is_found'] is True:
