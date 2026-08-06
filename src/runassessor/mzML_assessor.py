@@ -1579,7 +1579,7 @@ class MzMLAssessor:
             #### Detect water loss z=2 or not
             loss_type = 'precursor_loss_' + fragmentations
             if self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak']['mode_bin']['n_spectra'] >= 50:
-                if 'fit' in self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak']
+                if 'fit' in self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak']:
                     if self.metadata['files'][self.mzml_file]['neutral_loss_peaks'][loss_type]['water_z2']['peak']['fit']['sigma_mz'] < 0.1:
                         self.metadata['files'][self.mzml_file]['summary'][fragmentations]['has water_loss'] = True
                     else:
