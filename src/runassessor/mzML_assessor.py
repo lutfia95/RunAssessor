@@ -273,6 +273,10 @@ class MzMLAssessor:
                         match = re.search(r'scan=(\d+)',nativeId)
                         if match:
                             scan_number = int(match.group(1))
+                        else:
+                            match = re.search(r'index=(\d+)',nativeId)
+                            if match:
+                                scan_number = int(match.group(1))
 
                         #### Extract the isolation window information
                         self.record_isolation_window_stats(spectrum, stats, ms_one_tolerance_dict, scan_number)
