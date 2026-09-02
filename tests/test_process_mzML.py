@@ -16,8 +16,8 @@ print(tests_dir)
 project_root = os.path.dirname(tests_dir)
 print(project_root)
 
-bin_dir = os.path.join(project_root, "src")
-assess_mzMLs_file = os.path.join(bin_dir, "runassessor.py")
+src_dir = os.path.join(project_root, "src")
+assess_mzMLs_module = "runassessor.runassessor"
 
 tests_data_dir = os.path.join(tests_dir, "data")
 input_mzML_file = "chlo_6_tiny.mzML.gz" # Located in tests/data directory which is the current working directory for subprocess
@@ -32,9 +32,13 @@ expected_study_metadata = os.path.join(tests_expected_output_dir, "chlo_6_tiny_s
 
 def test_assess_mzMLs():
 
+    env = os.environ.copy()
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, [src_dir, env.get("PYTHONPATH")]))
+
     output = subprocess.run(
-        [sys.executable, assess_mzMLs_file, '--verbose', input_mzML_file],
+        [sys.executable, '-m', assess_mzMLs_module, '--verbose', input_mzML_file],
         cwd=tests_data_dir,
+        env=env,
         capture_output=True,
         text=True,
         check=True
@@ -91,6 +95,5 @@ def test_mzML_assessor():
     assert ROIs['TMT6_126']['peak']['mode_bin']['n_spectra'] == 2
 
     assert assessor.metadata['state']['status'] != 'ERROR'
-
 
 

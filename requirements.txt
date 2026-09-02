@@ -2,6 +2,7 @@ lxml
 matplotlib
 numpy
 pandas
+psims
 pypdf
 pyteomics
 python-dateutil

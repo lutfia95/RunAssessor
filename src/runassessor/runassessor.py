@@ -6,6 +6,7 @@ import argparse
 import multiprocessing
 import copy
 from datetime import datetime
+from importlib.metadata import version as distribution_version
 import timeit
 from matplotlib.backends.backend_pdf import PdfPages
 from pypdf import PdfReader, PdfWriter
@@ -46,7 +47,7 @@ def main():
     argparser.add_argument('--n_threads', action='store', type=int, help='Set the number of files to process in parallel (defaults to number of cores)')
     argparser.add_argument('--write_fragmentation_type_files', action='count', help='If set, write a fragmentation_type file for each mzML')
     argparser.add_argument('--verbose', action='count', help='If set, print more information about ongoing processing' )
-    argparser.add_argument('--version', action='version', version='%(prog)s 0.8')
+    argparser.add_argument('--version', action='version', version=f'%(prog)s {distribution_version("runassessor")}')
     argparser.add_argument('--write_sdrf_file', action='count', help='If set, then write an SDRF file based on the metadata file')
     argparser.add_argument('--include_sdrf_provenance', action='count', help='If set, then all information written to the SDRF file will have provenance tags (non-standard SDRF)')
     argparser.add_argument('--write_pdfs', action='count', help='If set, then generate a PDF of delta time and ppm graphs from precursor stats')
@@ -176,7 +177,7 @@ def main():
 
         nl_pdf = metadata_name.replace(".json", ".NLplots.pdf")
         # Write cover page documentation to pdf
-        nl_coverpage = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lib", "neutral_loss_windows_documentation.pdf")
+        nl_coverpage = os.path.join(os.path.dirname(os.path.abspath(__file__)), "neutral_loss_windows_documentation.pdf")
         writer = PdfWriter()
         cover_reader = PdfReader(nl_coverpage)
         for page in cover_reader.pages:

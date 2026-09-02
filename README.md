@@ -21,7 +21,7 @@ runassessor ~/file_path/mass_spec_data.mzML.gz
 
 RunAssessor can also accept multiple `.mzML` or '.mzML.gz' files at a time 
 ```bash
-runassessor --write_sdrf_files --verbose *.mzML
+runassessor --write_sdrf_file --verbose *.mzML
 ```
 
 ### Running a quick test
@@ -92,7 +92,6 @@ Renames raw files in current directory to replace special characters in filename
 Some special characters in filename can cause problems in downstream processing tools (for example: spaces, parentheses, ampersands, and more). This program
 fixes the filenames in a repeatable way and records how the filenames have been adjusted in an output file. This is not needed for normal RunAssessor operation,
 but may be useful for large-scale reprocessing efforts when certain tools have trouble with special characters in filenames.
-
 
 
 
